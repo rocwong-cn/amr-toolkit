@@ -37556,6 +37556,16 @@
         BenzAMRRecorder._silkModuleUrl = url;
       }
     }, {
+      key: "enableSilk",
+      value: function enableSilk(basePath) {
+        var moduleUrl = basePath || './res/silk-wasm';
+        if (!/\.mjs(\?.*)?(#.*)?$/.test(moduleUrl)) {
+          moduleUrl = moduleUrl.replace(/\/+$/, '') + '/index.mjs';
+        }
+        BenzAMRRecorder.setSilkModuleUrl(moduleUrl);
+        return moduleUrl;
+      }
+    }, {
       key: "getSilkModuleUrl",
       value: function getSilkModuleUrl() {
         return BenzAMRRecorder._silkModuleUrl;

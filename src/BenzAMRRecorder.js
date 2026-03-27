@@ -761,6 +761,15 @@ export default class BenzAMRRecorder {
         BenzAMRRecorder._silkModuleUrl = url;
     }
 
+    static enableSilk(basePath) {
+        let moduleUrl = basePath || './res/silk-wasm';
+        if (!/\.mjs(\?.*)?(#.*)?$/.test(moduleUrl)) {
+            moduleUrl = moduleUrl.replace(/\/+$/, '') + '/index.mjs';
+        }
+        BenzAMRRecorder.setSilkModuleUrl(moduleUrl);
+        return moduleUrl;
+    }
+
     static getSilkModuleUrl() {
         return BenzAMRRecorder._silkModuleUrl;
     }

@@ -263,6 +263,14 @@ export default class BenzAMRRecorder {
     public static setSilkModuleUrl(url: string): void;
 
     /**
+     * 一键启用 SILK，传目录或完整 mjs 路径都可
+     * 例如：`enableSilk('/silk-wasm')` 或 `enableSilk('/silk-wasm/index.mjs')`
+     * @param basePath
+     * @returns 最终生效的 mjs URL
+     */
+    public static enableSilk(basePath?: string): string;
+
+    /**
      * 获取当前 SILK wasm 模块地址
      */
     public static getSilkModuleUrl(): string;

@@ -10,7 +10,7 @@
 #### Added
 - 新增 `silk-v3` 纯前端解码与播放能力（`WebWorker + wasm`），无需后端转码。
 - 新增自动格式识别：`amr-nb`、`amr-wb`、`silk-v3`（含前导 `0x02` 的 SILK 头）。
-- 新增 SILK 相关 API：`BenzAMRRecorder.setSilkModuleUrl()`、`BenzAMRRecorder.getSilkModuleUrl()`、`decodeSILKAsync()`。
+- 新增 SILK 相关 API：`BenzAMRRecorder.enableSilk()`、`BenzAMRRecorder.setSilkModuleUrl()`、`BenzAMRRecorder.getSilkModuleUrl()`、`decodeSILKAsync()`。
 - 新增运行时资源目录：`res/silk-wasm/index.mjs`、`res/silk-wasm/silk.wasm`。
 
 #### Changed
@@ -117,10 +117,16 @@ amrFileObj.onchange = function() {
 }
 ```
 
-使用 SILK-V3（纯前端）前，需设置 wasm 模块路径（默认 `./res/silk-wasm/index.mjs`）：
+使用 SILK-V3（纯前端）前，推荐一键启用：
 
 ```javascript
-BenzAMRRecorder.setSilkModuleUrl('./res/silk-wasm/index.mjs');
+BenzAMRRecorder.enableSilk('/silk-wasm');
+```
+
+如果你需要精确指定 mjs 路径，也可以：
+
+```javascript
+BenzAMRRecorder.setSilkModuleUrl('/silk-wasm/index.mjs');
 ```
 
 录制 AMR：
