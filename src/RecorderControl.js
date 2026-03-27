@@ -40,16 +40,8 @@ export default class RecorderControl {
 
     _curSourceNode = null;
 
-    playPcm(samples, sampleRate, onEnded, startPos, audioType) {
-        let changeSampleRate = 8000;
-        // 针对 amr-wb进行采样率翻倍
-        if (audioType && audioType === 'audio/amr-wb') {
-            changeSampleRate = 16000;
-        } else {
-            changeSampleRate = sampleRate;
-        }
-
-        sampleRate = changeSampleRate;
+    playPcm(samples, sampleRate, onEnded, startPos) {
+        sampleRate = sampleRate || 8000;
         this.stopPcm();
 
         // 根据开始位置（秒数）截取播放采样

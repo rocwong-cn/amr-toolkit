@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"/>
     <meta name="format-detection" content="telephone=no"/>
-    <title>AMR decode/encode tests</title>
+    <title>AMR/SILK decode/encode tests</title>
 </head>
 
 <body>
@@ -16,7 +16,7 @@
         <a href="res/mario.amr">下载演示文件：mario.amr</a>
     </p>
     <p>
-        加载本地文件：<input type="file" id="amr-file" accept=".amr">（不会上传到任何服务器）
+        加载本地文件：<input type="file" id="amr-file" accept=".amr,.silk,.aac,.mp3">（支持 amr/amr-wb/silk-v3/aac/mp3，不会上传到任何服务器）
     </p>
     <p>
         <button id="amr-play" disabled>播放</button>
@@ -44,6 +44,8 @@
 <!--suppress ES6ModulesDependencies, ES6ConvertVarToLetConst -->
 <script>
     (function () {
+        BenzAMRRecorder.setSilkModuleUrl('./res/silk-wasm/index.mjs');
+
         function E(selector) {
             return document.querySelector(selector);
         }

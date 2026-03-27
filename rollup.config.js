@@ -15,7 +15,7 @@ export default [
                 browser: true
             }),
             babel({
-                exclude: ['./node_modules/**', './src/amrnb.js', './src/amrwb.js']
+                exclude: ['./node_modules/**', './src/amrnb.js', './src/amrwb.js', './src/silk.js']
             }),
             cjs(),
             // https://github.com/rollup/rollup/wiki/Troubleshooting#avoiding-eval
@@ -44,7 +44,7 @@ export default [
                 browser: true
             }),
             babel({
-                exclude: ['./node_modules/benz-recorderjs/**', './src/amrnb.js', './src/amrwb.js']
+                exclude: ['./node_modules/benz-recorderjs/**', './src/amrnb.js', './src/amrwb.js', './src/silk.js']
             }),
             cjs(),
             // https://github.com/rollup/rollup/wiki/Troubleshooting#avoiding-eval

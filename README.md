@@ -6,7 +6,7 @@
 fork 自[BenzLeung的 benz-amr-recorder 项目](https://github.com/BenzLeung/benz-amr-recorder) ;这个库非常好用，但是由于不支持 amr-wb 音频格式的解析，而恰巧工作中有需要解析 amr-wb 的场景，因此，我fork 了一份，自己添加了一些功能
 
 目前已支持
-1. amr-nb, amr-wb, aac, mp3 音频格式的解析和播放；
+1. amr-nb, amr-wb, silk-v3, aac, mp3 音频格式的解析和播放；
 2. 支持录音，并保存为 amr-nb格式的音频文件
 
 其他功能均继承自原库
@@ -87,7 +87,7 @@ amr.onEnded(function() {
 播放本地文件：
 
 ```html
-<input type="file" id="amr-file" accept=".amr">
+<input type="file" id="amr-file" accept=".amr,.silk,.aac,.mp3">
 ```
 
 ```javascript
@@ -98,6 +98,12 @@ amrFileObj.onchange = function() {
     amr.play();
   });
 }
+```
+
+使用 SILK-V3（纯前端）前，需设置 wasm 模块路径（默认 `./res/silk-wasm/index.mjs`）：
+
+```javascript
+BenzAMRRecorder.setSilkModuleUrl('./res/silk-wasm/index.mjs');
 ```
 
 录制 AMR：
@@ -431,4 +437,3 @@ BenzAMRRecorder.isRecordSupported();
 # 许可
 
 MIT.
-

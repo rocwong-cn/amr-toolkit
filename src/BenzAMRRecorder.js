@@ -22,7 +22,17 @@ const amrWbWorkerStr = amrWbWorker.toString()
     .replace(/}\s*$/, '');
 const amrWbWorkerURLObj = (window.URL || window.webkitURL).createObjectURL(new Blob([amrWbWorkerStr], {type:"text/javascript"}));
 
+import silkWorker from "./silk";
+const silkWorkerStr = silkWorker.toString()
+    .replace(/^\s*function.*?\(\)\s*{/, '')
+    .replace(/}\s*$/, '');
+const silkWorkerURLObj = (window.URL || window.webkitURL).createObjectURL(new Blob([silkWorkerStr], {type: "text/javascript"}));
+
 export default class BenzAMRRecorder {
+
+    static DEFAULT_SILK_SAMPLE_RATE = 24000;
+
+    static _silkModuleUrl = './res/silk-wasm/index.mjs';
 
     _isInit = false;
 
@@ -62,9 +72,58 @@ export default class BenzAMRRecorder {
 
     _pauseTime = 0.0;
 
-    _wbAudioType = '';
+    _audioType = '';
+
+    _sampleRate = 8000;
     
     constructor() {
+    }
+
+    static _bytesToAscii(u8Array, start, len) {
+        let str = '';
+        const max = Math.min(u8Array.length, start + len);
+        for (let i = start; i < max; i++) {
+            str += String.fromCharCode(u8Array[i]);
+        }
+        return str;
+    }
+
+    static _detectAudioType(u8Array, hintedType) {
+        if (hintedType === 'audio/amr' || hintedType === 'audio/amr-wb') {
+            return hintedType;
+        }
+        if (hintedType === 'audio/silk' || hintedType === 'audio/silk-v3') {
+            return 'audio/silk-v3';
+        }
+        if (!u8Array || !u8Array.length) {
+            return hintedType || '';
+        }
+
+        if (BenzAMRRecorder._bytesToAscii(u8Array, 0, 9) === '#!AMR-WB\n') {
+            return 'audio/amr-wb';
+        }
+        if (BenzAMRRecorder._bytesToAscii(u8Array, 0, 6) === '#!AMR\n') {
+            return 'audio/amr';
+        }
+        if (
+            BenzAMRRecorder._bytesToAscii(u8Array, 0, 9) === '#!SILK_V3' ||
+            (u8Array[0] === 0x02 && BenzAMRRecorder._bytesToAscii(u8Array, 1, 9) === '#!SILK_V3')
+        ) {
+            return 'audio/silk-v3';
+        }
+        return hintedType || '';
+    }
+
+    _getPlaybackSampleRate() {
+        return this._isInitRecorder ? RecorderControl.getCtxSampleRate() : this._sampleRate;
+    }
+
+    _getSilkModuleURL() {
+        try {
+            return new URL(BenzAMRRecorder._silkModuleUrl, window.location.href).toString();
+        } catch (e) {
+            return BenzAMRRecorder._silkModuleUrl;
+        }
     }
 
     /**
@@ -81,63 +140,79 @@ export default class BenzAMRRecorder {
      * @return {Promise}
      */
     initWithArrayBuffer(array, audioType) {
-        this._wbAudioType = audioType;
         if (this._isInit || this._isInitRecorder) {
             BenzAMRRecorder.throwAlreadyInitialized();
         }
         this._playEmpty();
+        const u8Array = new Uint8Array(array);
+        const detectedAudioType = BenzAMRRecorder._detectAudioType(u8Array, audioType);
+        const shouldFallbackToContextDecode = !detectedAudioType || detectedAudioType === 'audio/amr';
+
         return new Promise((resolve, reject) => {
-            if(audioType && audioType === 'audio/amr-wb') {
-                let u8Array = new Uint8Array(array);
-                this.decodeAMRWBAsync(u8Array).then((samples) => {
-                    this._samples = samples;
-                    this._isInit = true;
-    
-                    if (!this._samples) {
-                        RecorderControl.decodeAudioArrayBufferByContext(array).then((data) => {
-                            this._isInit = true;
-                            return this.encodeAMRAsync(data, RecorderControl.getCtxSampleRate());
-                        }).then((rawData) => {
-                            this._rawData = rawData;
-                            this._blob = BenzAMRRecorder.rawAMRWBData2Blob(rawData);
-                            return this.decodeAMRWBAsync(rawData);
-                        }).then((sample) => {
-                            this._samples = sample;
-                            resolve();
-                        }).catch(() => {
-                            reject(new Error('Failed to decode.'));
-                        });
-                    } else {
-                        this._rawData = u8Array;
-                        resolve();
-                    }
-                });
-            }else {
-                let u8Array = new Uint8Array(array);
-                this.decodeAMRAsync(u8Array).then((samples) => {
-                    this._samples = samples;
-                    this._isInit = true;
-    
-                    if (!this._samples) {
-                        RecorderControl.decodeAudioArrayBufferByContext(array).then((data) => {
-                            this._isInit = true;
-                            return this.encodeAMRAsync(data, RecorderControl.getCtxSampleRate());
-                        }).then((rawData) => {
-                            this._rawData = rawData;
-                            this._blob = BenzAMRRecorder.rawAMRData2Blob(rawData);
-                            return this.decodeAMRAsync(rawData);
-                        }).then((sample) => {
-                            this._samples = sample;
-                            resolve();
-                        }).catch(() => {
-                            reject(new Error('Failed to decode.'));
-                        });
-                    } else {
-                        this._rawData = u8Array;
-                        resolve();
-                    }
-                });
+            let decodePromise;
+            if (detectedAudioType === 'audio/amr-wb') {
+                decodePromise = this.decodeAMRWBAsync(u8Array).then((samples) => ({
+                    samples: samples,
+                    audioType: 'audio/amr-wb',
+                    sampleRate: 16000,
+                    rawData: u8Array,
+                    blob: BenzAMRRecorder.rawAMRWBData2Blob(u8Array)
+                }));
+            } else if (detectedAudioType === 'audio/silk-v3') {
+                decodePromise = this.decodeSILKAsync(u8Array).then((silkResult) => ({
+                    samples: silkResult.samples,
+                    audioType: 'audio/silk-v3',
+                    sampleRate: silkResult.sampleRate,
+                    rawData: u8Array,
+                    blob: BenzAMRRecorder.rawSILKData2Blob(u8Array)
+                }));
+            } else {
+                decodePromise = this.decodeAMRAsync(u8Array).then((samples) => ({
+                    samples: samples,
+                    audioType: 'audio/amr',
+                    sampleRate: 8000,
+                    rawData: u8Array,
+                    blob: BenzAMRRecorder.rawAMRData2Blob(u8Array)
+                }));
             }
+
+            decodePromise.then((result) => {
+                if (result.samples && result.samples.length) {
+                    this._samples = result.samples;
+                    this._rawData = result.rawData;
+                    this._audioType = result.audioType;
+                    this._sampleRate = result.sampleRate;
+                    this._isInit = true;
+                    if (!this._blob) {
+                        this._blob = result.blob;
+                    }
+                    resolve();
+                    return;
+                }
+
+                if (!shouldFallbackToContextDecode) {
+                    reject(new Error('Failed to decode.'));
+                    return;
+                }
+
+                RecorderControl.decodeAudioArrayBufferByContext(array).then((data) => {
+                    return this.encodeAMRAsync(data, RecorderControl.getCtxSampleRate());
+                }).then((rawData) => {
+                    this._rawData = rawData;
+                    this._audioType = 'audio/amr';
+                    this._sampleRate = 8000;
+                    this._blob = BenzAMRRecorder.rawAMRData2Blob(rawData);
+                    return this.decodeAMRAsync(rawData);
+                }).then((sample) => {
+                    this._samples = sample;
+                    this._isInit = true;
+                    resolve();
+                }).catch(() => {
+                    reject(new Error('Failed to decode.'));
+                });
+            }).catch(() => {
+                reject(new Error('Failed to decode.'));
+            });
         });
     }
 
@@ -147,7 +222,7 @@ export default class BenzAMRRecorder {
      * @return {Promise}
      */
     initWithBlob(blob, audioType) {
-        this._wbAudioType = audioType;
+        this._audioType = audioType || '';
         if (this._isInit || this._isInitRecorder) {
             BenzAMRRecorder.throwAlreadyInitialized();
         }
@@ -171,7 +246,7 @@ export default class BenzAMRRecorder {
      * @return {Promise}
      */
     initWithUrl(url, audioType) {
-        this._wbAudioType = audioType;
+        this._audioType = audioType || '';
         if (this._isInit || this._isInitRecorder) {
             BenzAMRRecorder.throwAlreadyInitialized();
         }
@@ -364,10 +439,9 @@ export default class BenzAMRRecorder {
         this._startCtxTime = RecorderControl.getCtxTime() - _startTime;
         this._recorderControl.playPcm(
             this._samples,
-            this._isInitRecorder ? RecorderControl.getCtxSampleRate() : 8000,
+            this._getPlaybackSampleRate(),
             this._onEndCallback.bind(this),
-            _startTime,
-            this._wbAudioType
+            _startTime
         );
     }
 
@@ -411,10 +485,9 @@ export default class BenzAMRRecorder {
         this._startCtxTime = RecorderControl.getCtxTime() - this._pauseTime;
         this._recorderControl.playPcm(
             this._samples,
-            this._isInitRecorder ? RecorderControl.getCtxSampleRate() : 8000,
+            this._getPlaybackSampleRate(),
             this._onEndCallback.bind(this),
-            this._pauseTime,
-            this._wbAudioType
+            this._pauseTime
         );
         if (this._onResume) {
             this._onResume();
@@ -471,10 +544,9 @@ export default class BenzAMRRecorder {
             this._startCtxTime = RecorderControl.getCtxTime() - _time;
             this._recorderControl.playPcm(
                 this._samples,
-                this._isInitRecorder ? RecorderControl.getCtxSampleRate() : 8000,
+                this._getPlaybackSampleRate(),
                 this._onEndCallback.bind(this),
-                _time,
-                this._wbAudioType
+                _time
             );
         } else {
             this.play(_time);
@@ -567,7 +639,7 @@ export default class BenzAMRRecorder {
      * @return {number}
      */
     getDuration() {
-        let rate = this._isInitRecorder ? RecorderControl.getCtxSampleRate() : (this._wbAudioType === 'audio/amr-wb' ? 16000 : 8000);
+        let rate = this._isInitRecorder ? RecorderControl.getCtxSampleRate() : this._sampleRate;
         return this._samples.length / rate;
     }
 
@@ -640,12 +712,57 @@ export default class BenzAMRRecorder {
         })
     }
 
+    _runSilkWorker = (msg, resolve, reject) => {
+        const silkWorkerObj = new Worker(silkWorkerURLObj);
+        silkWorkerObj.postMessage(msg);
+        silkWorkerObj.onmessage = (e) => {
+            if (e.data && e.data.error) {
+                reject(new Error(e.data.error));
+            } else {
+                resolve(e.data);
+            }
+            silkWorkerObj.terminate();
+        };
+        silkWorkerObj.onerror = (e) => {
+            reject(new Error(e.message || 'Failed to decode silk audio.'));
+            silkWorkerObj.terminate();
+        };
+    };
+
+    decodeSILKAsync(u8Array, sampleRate) {
+        return new Promise((resolve, reject) => {
+            this._runSilkWorker({
+                command: 'decode',
+                buffer: u8Array,
+                sampleRate: sampleRate || BenzAMRRecorder.DEFAULT_SILK_SAMPLE_RATE,
+                moduleUrl: this._getSilkModuleURL()
+            }, resolve, reject);
+        }).then((result) => {
+            return {
+                samples: result.samples,
+                sampleRate: result.sampleRate || sampleRate || BenzAMRRecorder.DEFAULT_SILK_SAMPLE_RATE
+            };
+        });
+    }
+
     static rawAMRWBData2Blob(data) {
         return new Blob([data.buffer], {type: 'audio/amr-wb'});
     }
 
+    static rawSILKData2Blob(data) {
+        return new Blob([data.buffer], {type: 'audio/silk'});
+    }
+
     static rawAMRData2Blob(data) {
         return new Blob([data.buffer], {type: 'audio/amr'});
+    }
+
+    static setSilkModuleUrl(url) {
+        BenzAMRRecorder._silkModuleUrl = url;
+    }
+
+    static getSilkModuleUrl() {
+        return BenzAMRRecorder._silkModuleUrl;
     }
 
     static throwAlreadyInitialized() {

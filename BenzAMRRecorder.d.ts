@@ -29,9 +29,13 @@ export default class BenzAMRRecorder {
     private _isPaused: boolean;
     private _startCtxTime: Number;
     private _pauseTime: Number;
+    private _audioType: string;
+    private _sampleRate: number;
     private _playEmpty: (() => void);
     private _onEndCallback: (() => void);
     private _runAMRWorker: Function;
+    private _runAMRWBWorker: Function;
+    private _runSilkWorker: Function;
     private on(action: string, fn: () => void): void;
     private throwAlreadyInitialized: (() => void);
 
@@ -44,19 +48,19 @@ export default class BenzAMRRecorder {
      * 使用浮点数据初始化
      * @param array
      */
-    public initWithArrayBuffer(array: Float32Array): Promise<void>;
+    public initWithArrayBuffer(array: Float32Array|ArrayBuffer, audioType?: string): Promise<void>;
 
     /**
      * 使用 Blob 对象初始化（ <input type="file">）
      * @param blob
      */
-    public initWithBlob(blob: Blob): Promise<void>;
+    public initWithBlob(blob: Blob, audioType?: string): Promise<void>;
 
     /**
      * 使用 url 初始化
      * @param url
      */
-    public initWithUrl(url: string): Promise<void>;
+    public initWithUrl(url: string, audioType?: string): Promise<void>;
 
     /**
      * 初始化录音
@@ -222,10 +226,46 @@ export default class BenzAMRRecorder {
     public decodeAMRAsync(u8Array: Uint8Array): Promise<Float32Array>;
 
     /**
+     * 解码 AMR-WB
+     * @param u8Array
+     */
+    public decodeAMRWBAsync(u8Array: Uint8Array): Promise<Float32Array>;
+
+    /**
+     * 解码 SILK V3
+     * @param u8Array
+     * @param sampleRate
+     */
+    public decodeSILKAsync(u8Array: Uint8Array, sampleRate?: number): Promise<{samples: Float32Array, sampleRate: number}>;
+
+    /**
+     * AMR-WB 数据转换成 Blob
+     * @param data
+     */
+    public static rawAMRWBData2Blob(data: Uint8Array): Blob;
+
+    /**
+     * SILK 数据转换成 Blob
+     * @param data
+     */
+    public static rawSILKData2Blob(data: Uint8Array): Blob;
+
+    /**
      * AMR 数据转换成 Blob
      * @param data
      */
     public static rawAMRData2Blob(data: Uint8Array): Blob;
+
+    /**
+     * 设置 SILK wasm 模块地址（默认 `./res/silk-wasm/index.mjs`）
+     * @param url
+     */
+    public static setSilkModuleUrl(url: string): void;
+
+    /**
+     * 获取当前 SILK wasm 模块地址
+     */
+    public static getSilkModuleUrl(): string;
 
     /**
      * 判断浏览器是否支持播放

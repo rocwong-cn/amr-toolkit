@@ -2,33 +2,40 @@
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('fs'), require('path')) :
   typeof define === 'function' && define.amd ? define(['fs', 'path'], factory) :
   (global = global || self, global.BenzAMRRecorder = factory(global.fs, global.path$1));
-}(this, function (fs, path$1) {
-  fs = fs && fs.hasOwnProperty('default') ? fs['default'] : fs;
-  path$1 = path$1 && path$1.hasOwnProperty('default') ? path$1['default'] : path$1;
+}(this, (function (fs, path$1) {
+  fs = fs && Object.prototype.hasOwnProperty.call(fs, 'default') ? fs['default'] : fs;
+  path$1 = path$1 && Object.prototype.hasOwnProperty.call(path$1, 'default') ? path$1['default'] : path$1;
 
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
+  function _classCallCheck(a, n) {
+    if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
+  }
+  function _defineProperties(e, r) {
+    for (var t = 0; t < r.length; t++) {
+      var o = r[t];
+      o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o);
     }
   }
-
-  function _defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
+  function _createClass(e, r, t) {
+    return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", {
+      writable: !1
+    }), e;
+  }
+  function _toPrimitive(t, r) {
+    if ("object" != typeof t || !t) return t;
+    var e = t[Symbol.toPrimitive];
+    if (void 0 !== e) {
+      var i = e.call(t, r || "default");
+      if ("object" != typeof i) return i;
+      throw new TypeError("@@toPrimitive must return a primitive value.");
     }
+    return ("string" === r ? String : Number)(t);
+  }
+  function _toPropertyKey(t) {
+    var i = _toPrimitive(t, "string");
+    return "symbol" == typeof i ? i : i + "";
   }
 
-  function _createClass(Constructor, protoProps, staticProps) {
-    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) _defineProperties(Constructor, staticProps);
-    return Constructor;
-  }
-
-  var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+  var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
   function commonjsRequire () {
   	throw new Error('Dynamic requires are not currently supported by rollup-plugin-commonjs');
@@ -40,7 +47,7 @@
 
   var recorder_build = createCommonjsModule(function (module, exports) {
   (function (global, factory) {
-      module.exports = factory();
+       module.exports = factory() ;
   }(commonjsGlobal, (function () {
       var recorderWorker = function () {
 
@@ -297,7 +304,6 @@
   var AudioContext = window.AudioContext || window.webkitAudioContext || window.mozAudioContext;
   var ctx = null;
   var isSupport = true;
-
   window.resetAudioContext = function () {
     if (ctx) {
       ctx.close().then(function () {
@@ -312,51 +318,35 @@
       }
     }
   };
-
   window.resetAudioContext();
-
-  var RecorderControl =
-  /*#__PURE__*/
-  function () {
+  var RecorderControl = /*#__PURE__*/function () {
     function RecorderControl() {
       _classCallCheck(this, RecorderControl);
-
       this._recorderStream = null;
       this._recorderStreamSourceNode = null;
       this._recorder = null;
       this._isRecording = false;
       this._curSourceNode = null;
     }
-
-    _createClass(RecorderControl, [{
+    return _createClass(RecorderControl, [{
       key: "playPcm",
-      value: function playPcm(samples, sampleRate, onEnded, startPos, audioType) {
-        var changeSampleRate = 8000; // 针对 amr-wb进行采样率翻倍
+      value: function playPcm(samples, sampleRate, onEnded, startPos) {
+        sampleRate = sampleRate || 8000;
+        this.stopPcm();
 
-        if (audioType && audioType === 'audio/amr-wb') {
-          changeSampleRate = 16000;
-        } else {
-          changeSampleRate = sampleRate;
-        }
-
-        sampleRate = changeSampleRate;
-        this.stopPcm(); // 根据开始位置（秒数）截取播放采样
-
+        // 根据开始位置（秒数）截取播放采样
         var _samples = startPos && startPos > 0.001 ? samples.slice(sampleRate * startPos) : samples;
-
         if (!_samples || !_samples.length) {
           return onEnded();
         }
-
         var buffer, channelBuffer;
         this._curSourceNode = ctx['createBufferSource']();
-
         try {
           console.log('[root- playPcm try 采样率] ', sampleRate);
           buffer = ctx['createBuffer'](1, _samples.length, sampleRate);
         } catch (e) {
-          console.log('[root- playPcm catch 采样率]', sampleRate); // iOS 不支持 22050 以下的采样率，于是先提升采样率，然后用慢速播放
-
+          console.log('[root- playPcm catch 采样率]', sampleRate);
+          // iOS 不支持 22050 以下的采样率，于是先提升采样率，然后用慢速播放
           if (sampleRate < 11025) {
             buffer = ctx['createBuffer'](1, _samples.length, sampleRate * 4);
             this._curSourceNode['playbackRate'].value = 0.25;
@@ -365,21 +355,16 @@
             this._curSourceNode['playbackRate'].value = 0.5;
           }
         }
-
         if (buffer['copyToChannel']) {
           buffer['copyToChannel'](_samples, 0, 0);
         } else {
           channelBuffer = buffer['getChannelData'](0);
           channelBuffer.set(_samples);
         }
-
         this._curSourceNode['buffer'] = buffer;
         this._curSourceNode['loop'] = false;
-
         this._curSourceNode['connect'](ctx['destination']);
-
         this._curSourceNode.onended = onEnded;
-
         this._curSourceNode.start();
       }
     }, {
@@ -387,7 +372,6 @@
       value: function stopPcm() {
         if (this._curSourceNode) {
           this._curSourceNode.stop();
-
           this._curSourceNode = null;
         }
       }
@@ -401,7 +385,6 @@
       key: "initRecorder",
       value: function initRecorder() {
         var _this = this;
-
         return new Promise(function (resolve, reject) {
           var s = function s(stream) {
             _this._recorderStream = stream;
@@ -410,11 +393,9 @@
             _this._isRecording = false;
             resolve();
           };
-
           var j = function j(e) {
             reject(e);
           };
-
           if (!_this._recorder) {
             if (window.navigator.mediaDevices && window.navigator.mediaDevices.getUserMedia) {
               window.navigator.mediaDevices.getUserMedia({
@@ -442,9 +423,7 @@
       value: function startRecord() {
         if (this._recorder) {
           this._recorder.clear();
-
           this._recorder.record();
-
           this._isRecording = true;
         }
       }
@@ -453,7 +432,6 @@
       value: function stopRecord() {
         if (this._recorder) {
           this._recorder.stop();
-
           this._isRecording = false;
         }
       }
@@ -461,7 +439,6 @@
       key: "generateRecordSamples",
       value: function generateRecordSamples() {
         var _this2 = this;
-
         return new Promise(function (resolve) {
           if (_this2._recorder) {
             _this2._recorder.getBuffer(function (buffers) {
@@ -477,13 +454,10 @@
           this._recorderStream.getTracks().forEach(function (track) {
             track.stop();
           });
-
           this._recorderStream = null;
         }
-
         if (this._recorder) {
           this._recorder.release();
-
           this._recorder = null;
         }
       }
@@ -515,7 +489,6 @@
             // 把多声道音频 mix 成单声道
             var numberOfChannels = audioBuf.numberOfChannels;
             var dest = new Float32Array(audioBuf.length);
-
             switch (numberOfChannels) {
               default:
               case 1:
@@ -523,59 +496,44 @@
                   dest = audioBuf.getChannelData(0);
                   break;
                 }
-
               case 2:
                 {
                   var left = audioBuf.getChannelData(0);
                   var right = audioBuf.getChannelData(1);
-
                   for (var i = 0, l = dest.length; i < l; i++) {
                     dest[i] = 0.5 * (left[i] + right[i]);
                   }
-
                   break;
                 }
-
               case 4:
                 {
                   var _left = audioBuf.getChannelData(0);
-
                   var _right = audioBuf.getChannelData(1);
-
                   var sLeft = audioBuf.getChannelData(2);
                   var sRight = audioBuf.getChannelData(3);
-
                   for (var _i = 0, _l = dest.length; _i < _l; _i++) {
                     dest[_i] = 0.25 * (_left[_i] + _right[_i] + sLeft[_i] + sRight[_i]);
                   }
-
                   break;
                 }
-
               case 6:
                 {
                   var _left2 = audioBuf.getChannelData(0);
-
                   var _right2 = audioBuf.getChannelData(1);
-
                   var center = audioBuf.getChannelData(2);
-
                   var _sLeft = audioBuf.getChannelData(4);
-
                   var _sRight = audioBuf.getChannelData(5);
-
                   for (var _i2 = 0, _l2 = dest.length; _i2 < _l2; _i2++) {
                     dest[_i2] = 0.7071 * (_left2[_i2] + _right2[_i2]) + center[_i2] + 0.5 * (_sLeft[_i2] + _sRight[_i2]);
                   }
-
                   break;
                 }
             }
-
             resolve(dest);
           }, reject);
         });
       }
+
       /*
       static _increaseSampleRate(samples, multiple) {
           let sampleLen = samples.length;
@@ -588,10 +546,7 @@
           return newSamples;
       };
       */
-
     }]);
-
-    return RecorderControl;
   }();
 
   var amrnb = function() {
@@ -791,7 +746,7 @@
                   Module["read"] = read;
               } else {
                   Module["read"] = function read() {
-                      throw"no read() available (jsc?)"
+                      throw "no read() available (jsc?)"
                   };
               }
               Module["readBinary"] = function readBinary(f) {
@@ -840,7 +795,7 @@
                   });
               }
           } else {
-              throw"Unknown runtime environment. Where are we?"
+              throw "Unknown runtime environment. Where are we?"
           }
 
           function globalEval(x) {
@@ -941,7 +896,7 @@
                           return 2 * (1 + i)
                       }
                   }
-                  throw"Finished up all reserved function pointers. Use a higher value for RESERVED_FUNCTION_POINTERS."
+                  throw "Finished up all reserved function pointers. Use a higher value for RESERVED_FUNCTION_POINTERS."
               }), removeFunction: (function (index) {
                   Runtime.functionPointers[(index - 2) / 2] = null;
               }), warnOnce: (function (text) {
@@ -963,7 +918,7 @@
                   }
                   return sigCache[func]
               }), getCompilerSetting: (function (name) {
-                  throw"You must build with -s RETAIN_COMPILER_SETTINGS=1 for Runtime.getCompilerSetting or emscripten_get_compiler_setting to work"
+                  throw "You must build with -s RETAIN_COMPILER_SETTINGS=1 for Runtime.getCompilerSetting or emscripten_get_compiler_setting to work"
               }), stackAlloc: (function (size) {
                   var ret = STACKTOP;
                   STACKTOP = STACKTOP + size | 0;
@@ -1656,16 +1611,14 @@
                                   i += size + 2;
                                   break
                               }
-
                               case"A": {
                                   var size = parseInt(func.substr(i));
                                   i += size.toString().length;
-                                  if (func[i] !== "_") throw"?";
+                                  if (func[i] !== "_") throw "?";
                                   i++;
                                   list.push(parse(true, 1, true)[0] + " [" + size + "]");
                                   break
                               }
-
                               case"E":
                                   break paramLoop;
                               default:
@@ -1959,12 +1912,7 @@
           var Math_floor = Math.floor;
           var Math_min = Math.min;
           var runDependencies = 0;
-          var runDependencyWatcher = null;
           var dependenciesFulfilled = null;
-
-          function getUniqueRunDependency(id) {
-              return id
-          }
 
           function addRunDependency(id) {
               runDependencies++;
@@ -1981,10 +1929,6 @@
                   Module["monitorRunDependencies"](runDependencies);
               }
               if (runDependencies == 0) {
-                  if (runDependencyWatcher !== null) {
-                      clearInterval(runDependencyWatcher);
-                      runDependencyWatcher = null;
-                  }
                   if (dependenciesFulfilled) {
                       var callback = dependenciesFulfilled;
                       dependenciesFulfilled = null;
@@ -3788,6 +3732,9 @@
                       }
                   }
                   try {
+                      if (FS.trackingDelegate["willMovePath"]) {
+                          FS.trackingDelegate["willMovePath"](old_path, new_path);
+                      }
                   } catch (e) {
                       console.log("FS.trackingDelegate['willMovePath']('" + old_path + "', '" + new_path + "') threw an exception: " + e.message);
                   }
@@ -3800,6 +3747,7 @@
                       FS.hashAddNode(old_node);
                   }
                   try {
+                      if (FS.trackingDelegate["onMovePath"]) FS.trackingDelegate["onMovePath"](old_path, new_path);
                   } catch (e) {
                       console.log("FS.trackingDelegate['onMovePath']('" + old_path + "', '" + new_path + "') threw an exception: " + e.message);
                   }
@@ -3820,12 +3768,16 @@
                       throw new FS.ErrnoError(ERRNO_CODES.EBUSY)
                   }
                   try {
+                      if (FS.trackingDelegate["willDeletePath"]) {
+                          FS.trackingDelegate["willDeletePath"](path);
+                      }
                   } catch (e) {
                       console.log("FS.trackingDelegate['willDeletePath']('" + path + "') threw an exception: " + e.message);
                   }
                   parent.node_ops.rmdir(parent, name);
                   FS.destroyNode(node);
                   try {
+                      if (FS.trackingDelegate["onDeletePath"]) FS.trackingDelegate["onDeletePath"](path);
                   } catch (e) {
                       console.log("FS.trackingDelegate['onDeletePath']('" + path + "') threw an exception: " + e.message);
                   }
@@ -3855,12 +3807,16 @@
                       throw new FS.ErrnoError(ERRNO_CODES.EBUSY)
                   }
                   try {
+                      if (FS.trackingDelegate["willDeletePath"]) {
+                          FS.trackingDelegate["willDeletePath"](path);
+                      }
                   } catch (e) {
                       console.log("FS.trackingDelegate['willDeletePath']('" + path + "') threw an exception: " + e.message);
                   }
                   parent.node_ops.unlink(parent, name);
                   FS.destroyNode(node);
                   try {
+                      if (FS.trackingDelegate["onDeletePath"]) FS.trackingDelegate["onDeletePath"](path);
                   } catch (e) {
                       console.log("FS.trackingDelegate['onDeletePath']('" + path + "') threw an exception: " + e.message);
                   }
@@ -4050,6 +4006,16 @@
                       }
                   }
                   try {
+                      if (FS.trackingDelegate["onOpenFile"]) {
+                          var trackingFlags = 0;
+                          if ((flags & 2097155) !== 1) {
+                              trackingFlags |= FS.tracking.openFlags.READ;
+                          }
+                          if ((flags & 2097155) !== 0) {
+                              trackingFlags |= FS.tracking.openFlags.WRITE;
+                          }
+                          FS.trackingDelegate["onOpenFile"](path, trackingFlags);
+                      }
                   } catch (e) {
                       console.log("FS.trackingDelegate['onOpenFile']('" + path + "', flags) threw an exception: " + e.message);
                   }
@@ -4595,7 +4561,7 @@
                       this.lengthKnown = true;
                   };
                   if (typeof XMLHttpRequest !== "undefined") {
-                      if (!ENVIRONMENT_IS_WORKER) throw"Cannot do synchronous binary XHRs outside webworkers in modern browsers. Use --embed-file or --preload-file in emcc";
+                      if (!ENVIRONMENT_IS_WORKER) throw "Cannot do synchronous binary XHRs outside webworkers in modern browsers. Use --embed-file or --preload-file in emcc";
                       var lazyArray = new LazyUint8Array;
                       Object.defineProperty(lazyArray, "length", {
                           get: (function () {
@@ -4665,7 +4631,6 @@
               createPreloadedFile: (function (parent, name, url, canRead, canWrite, onload, onerror, dontCreateFile, canOwn, preFinish) {
                   Browser.init();
                   var fullname = name ? PATH.resolve(PATH.join2(parent, name)) : parent;
-                  var dep = getUniqueRunDependency("cp " + fullname);
 
                   function processData(byteArray) {
                       function finish(byteArray) {
@@ -4674,7 +4639,7 @@
                               FS.createDataFile(parent, name, byteArray, canRead, canWrite, canOwn);
                           }
                           if (onload) onload();
-                          removeRunDependency(dep);
+                          removeRunDependency();
                       }
 
                       var handled = false;
@@ -4683,7 +4648,7 @@
                           if (plugin["canHandle"](fullname)) {
                               plugin["handle"](byteArray, fullname, finish, (function () {
                                   if (onerror) onerror();
-                                  removeRunDependency(dep);
+                                  removeRunDependency();
                               }));
                               handled = true;
                           }
@@ -4691,7 +4656,7 @@
                       if (!handled) finish(byteArray);
                   }
 
-                  addRunDependency(dep);
+                  addRunDependency();
                   if (typeof url == "string") {
                       Browser.asyncLoad(url, (function (byteArray) {
                           processData(byteArray);
@@ -5000,7 +4965,7 @@
                   Browser.mainLoop.scheduler();
               }
               if (simulateInfiniteLoop) {
-                  throw"SimulateInfiniteLoop"
+                  throw "SimulateInfiniteLoop"
               }
           }
 
@@ -5420,7 +5385,7 @@
                           delta = event["deltaY"];
                           break;
                       default:
-                          throw"unrecognized mouse wheel event: " + event.type
+                          throw "unrecognized mouse wheel event: " + event.type
                   }
                   return delta
               }),
@@ -5500,15 +5465,15 @@
                   Browser.xhrLoad(url, (function (arrayBuffer) {
                       assert(arrayBuffer, 'Loading data file "' + url + '" failed (no arrayBuffer).');
                       onload(new Uint8Array(arrayBuffer));
-                      if (!noRunDep) removeRunDependency("al " + url);
+                      if (!noRunDep) removeRunDependency();
                   }), (function (event) {
                       if (onerror) {
                           onerror();
                       } else {
-                          throw'Loading data file "' + url + '" failed.'
+                          throw 'Loading data file "' + url + '" failed.'
                       }
                   }));
-                  if (!noRunDep) addRunDependency("al " + url);
+                  if (!noRunDep) addRunDependency();
               }),
               resizeListeners: [],
               updateResizeListeners: (function () {
@@ -5644,8 +5609,10 @@
           Module["FS_createDevice"] = FS.createDevice;
           Module["FS_unlink"] = FS.unlink;
           __ATINIT__.unshift((function () {
+              TTY.init();
           }));
           __ATEXIT__.push((function () {
+              TTY.shutdown();
           }));
           STACK_BASE = STACKTOP = Runtime.alignMemory(STATICTOP);
           staticSealed = true;
@@ -5696,8 +5663,22 @@
               var j = env.STACK_MAX | 0;
               var k = env.tempDoublePtr | 0;
               var l = env.ABORT | 0;
+              var m = 0;
+              var n = 0;
+              var o = 0;
+              var p = 0;
               var q = global.NaN, r = global.Infinity;
+              var s = 0, t = 0, u = 0, v = 0, w = 0.0, x = 0, y = 0, z = 0, A = 0.0;
               var B = 0;
+              var C = 0;
+              var D = 0;
+              var E = 0;
+              var F = 0;
+              var G = 0;
+              var H = 0;
+              var I = 0;
+              var J = 0;
+              var K = 0;
               var L = global.Math.floor;
               var M = global.Math.abs;
               var N = global.Math.sqrt;
@@ -5726,6 +5707,7 @@
               var ia = env._emscripten_set_main_loop_timing;
               var ja = env._emscripten_memcpy_big;
               var ka = env._emscripten_set_main_loop;
+              var la = 0.0;
 
       // EMSCRIPTEN_START_FUNCS
               function ma(a) {
@@ -5756,6 +5738,30 @@
               function qa(a, b) {
                   a = a | 0;
                   b = b | 0;
+                  if (!m) {
+                      m = a;
+                      n = b;
+                  }
+              }
+
+              function ra(b) {
+                  b = b | 0;
+                  a[k >> 0] = a[b >> 0];
+                  a[k + 1 >> 0] = a[b + 1 >> 0];
+                  a[k + 2 >> 0] = a[b + 2 >> 0];
+                  a[k + 3 >> 0] = a[b + 3 >> 0];
+              }
+
+              function sa(b) {
+                  b = b | 0;
+                  a[k >> 0] = a[b >> 0];
+                  a[k + 1 >> 0] = a[b + 1 >> 0];
+                  a[k + 2 >> 0] = a[b + 2 >> 0];
+                  a[k + 3 >> 0] = a[b + 3 >> 0];
+                  a[k + 4 >> 0] = a[b + 4 >> 0];
+                  a[k + 5 >> 0] = a[b + 5 >> 0];
+                  a[k + 6 >> 0] = a[b + 6 >> 0];
+                  a[k + 7 >> 0] = a[b + 7 >> 0];
               }
 
               function ta(a) {
@@ -7359,7 +7365,8 @@
                           b[d + 436 >> 1] = 1;
                           break
                       }
-                      default:
+                      default: {
+                      }
                   }
                   n = d + 646 | 0;
                   Fa = d + 666 | 0;
@@ -7864,7 +7871,7 @@
                           if (da) {
                               if (!(Ja | (b[aa >> 1] | 0) != 0)) x = 145;
                           } else if (!Ja) x = 145;
-                          if ((x | 0) == 145 ? ((b[U >> 1] | 0) == 0) : 0) {
+                          if ((x | 0) == 145 ? (0, (b[U >> 1] | 0) == 0) : 0) {
                               x = 147;
                               break
                           }
@@ -9277,7 +9284,8 @@
                               k = 4;
                               break a
                           }
-                          default:
+                          default: {
+                          }
                       }
                       b[a >> 1] = 0;
                       j = 0;
@@ -10031,7 +10039,7 @@
                       a = -1;
                       return a | 0
                   }
-  b[a >> 1] = 0;
+                  ;b[a >> 1] = 0;
                   b[a + 2 >> 1] = 0;
                   b[a + 4 >> 1] = 0;
                   b[a + 6 >> 1] = 0;
@@ -10595,7 +10603,8 @@
                                   b[o >> 1] = e[o >> 1] | 0 | 1;
                                   break
                               }
-                              default:
+                              default: {
+                              }
                           }
                           b[m + 72 >> 1] = g & 1;
                           b[m + 74 >> 1] = g >>> 1 & 1;
@@ -11564,7 +11573,8 @@
                           m = 2;
                           break
                       }
-                      default:
+                      default: {
+                      }
                   }
                   f = h + (v << 1) | 0;
                   if (a << 16 >> 16 > 0) {
@@ -11601,7 +11611,8 @@
                           a = 2;
                           break
                       }
-                      default:
+                      default: {
+                      }
                   }
                   m = h + (t << 1) | 0;
                   if (n << 16 >> 16 > 0) {
@@ -13350,7 +13361,7 @@
                           d = (c[N >> 2] | 0) + (v << 1) | 0;
                           if (j) j = 20; else j = 19;
                       } while (0);
-                      if ((j | 0) == 19) yd(e, 2842, 2862, 2882, n, o, d, B, w, c[D >> 2] | 0, E, (c[F >> 2] | 0) + (v << 1) | 0, c[G >> 2] | 0, ka, ha, c[H >> 2] | 0); else if ((j | 0) == 20 ? (yd(0, 2842, 2862, 2882, n, o, d, B, ga, c[D >> 2] | 0, E, (c[F >> 2] | 0) + (v << 1) | 0, c[G >> 2] | 0, ka, ha, c[H >> 2] | 0), r) : 0) {
+                      if ((j | 0) == 19) yd(e, 2842, 2862, 2882, n, o, d, B, w, c[D >> 2] | 0, E, (c[F >> 2] | 0) + (v << 1) | 0, c[G >> 2] | 0, ka, ha, c[H >> 2] | 0); else if ((j | 0) == 20 ? (0, yd(0, 2842, 2862, 2882, n, o, d, B, ga, c[D >> 2] | 0, E, (c[F >> 2] | 0) + (v << 1) | 0, c[G >> 2] | 0, ka, ha, c[H >> 2] | 0), r) : 0) {
                           j = da;
                           e = c[G >> 2] | 0;
                           q = j + 80 | 0;
@@ -13378,7 +13389,8 @@
                               if ((b[y >> 1] | 0) > 0) b[O >> 1] = b[U >> 1] | 0;
                               break
                           }
-                          default:
+                          default: {
+                          }
                       }
                       Xb(la, c[G >> 2] | 0, b[U >> 1] | 0, b[C >> 1] | 0, b[aa >> 1] | 0, ia, X, oa, T, c[g >> 2] | 0, u, R, S);
                       Bc(c[L >> 2] | 0, c[g >> 2] | 0, ha, (c[F >> 2] | 0) + (v << 1) | 0, X, ka, la, na, oa, Z, f, b[ca >> 1] | 0, ba, $, aa, _, T, R, S);
@@ -14750,7 +14762,7 @@
                       a = -1;
                       return a | 0
                   }
-  b[d >> 1] = 0;
+                  ;b[d >> 1] = 0;
                   b[d + 2 >> 1] = 0;
                   b[d + 4 >> 1] = 0;
                   b[d + 6 >> 1] = 0;
@@ -14769,7 +14781,7 @@
                       a = -1;
                       return a | 0
                   }
-  b[a >> 1] = 0;
+                  ;b[a >> 1] = 0;
                   b[a + 2 >> 1] = 0;
                   b[a + 4 >> 1] = 0;
                   b[a + 6 >> 1] = 0;
@@ -16877,7 +16889,7 @@
                       a = -1;
                       return a | 0
                   }
-  b[d >> 1] = 0;
+                  ;b[d >> 1] = 0;
                   b[d + 2 >> 1] = 0;
                   b[d + 4 >> 1] = 0;
                   b[d + 6 >> 1] = 0;
@@ -16894,7 +16906,7 @@
                       a = -1;
                       return a | 0
                   }
-  b[a >> 1] = 0;
+                  ;b[a >> 1] = 0;
                   b[a + 2 >> 1] = 0;
                   b[a + 4 >> 1] = 0;
                   b[a + 6 >> 1] = 0;
@@ -19399,7 +19411,7 @@
                       a = -1;
                       return a | 0
                   }
-  b[d >> 1] = 0;
+                  ;b[d >> 1] = 0;
                   b[d + 2 >> 1] = 0;
                   b[d + 4 >> 1] = 0;
                   b[d + 6 >> 1] = 0;
@@ -19418,7 +19430,7 @@
                       a = -1;
                       return a | 0
                   }
-  b[a >> 1] = 0;
+                  ;b[a >> 1] = 0;
                   b[a + 2 >> 1] = 0;
                   b[a + 4 >> 1] = 0;
                   b[a + 6 >> 1] = 0;
@@ -24548,7 +24560,7 @@
 
               function Le() {
                   var a = 0;
-                  a = 600;
+                  if (!0) a = 600; else a = c[(da() | 0) + 60 >> 2] | 0;
                   return a | 0
               }
 
@@ -25383,6 +25395,7 @@
   				Module.printErr(text);
   			}
   		}
+  		var functionPointers = new Array(0);
   		var GLOBAL_BASE = 8;
   		var ABORT = 0;
 
@@ -26046,8 +26059,17 @@
   			var k = env.ABORT | 0;
   			var l = env.STACKTOP | 0;
   			var m = env.STACK_MAX | 0;
+  			var n = 0;
+  			var o = 0;
+  			var p = 0;
+  			var q = 0;
   			var r = global.NaN,
   				s = global.Infinity;
+  			var t = 0,
+  				u = 0,
+  				v = 0,
+  				w = 0,
+  				x = 0.0;
   			var y = 0;
   			var z = global.Math.floor;
   			var A = global.Math.abs;
@@ -26086,6 +26108,7 @@
   			var fa = env.___unlock;
   			var ga = env._emscripten_memcpy_big;
   			var ha = env.flush_NO_FILESYSTEM;
+  			var ia = 0.0;
   			// EMSCRIPTEN_START_FUNCS
 
   			function la(a) {
@@ -26117,6 +26140,10 @@
   			function pa(a, b) {
   				a = a | 0;
   				b = b | 0;
+  				if (!n) {
+  					n = a;
+  					o = b;
+  				}
   			}
 
   			function qa(a) {
@@ -26951,7 +26978,7 @@
   						return
   					}
   				default:
-
+  					{}
   				}
   			}
 
@@ -27078,7 +27105,7 @@
   						return
   					}
   				default:
-
+  					{}
   				}
   			}
 
@@ -27966,7 +27993,7 @@
   							break a
   						}
   					default:
-
+  						{}
   					}
   					d = 0;
   					e = a;
@@ -30595,7 +30622,7 @@
   								break
   							}
   						default:
-
+  							{}
   						}
   						while (0);
   						if ((s | 0) == 18) {
@@ -30712,7 +30739,7 @@
   								break
   							}
   						default:
-
+  							{}
   						}
   						while (0);
   						if ((s | 0) == 47) {
@@ -31097,7 +31124,7 @@
   						break
   					}
   				default:
-
+  					{}
   				}
   				if ((k | 0) < 131072) h = 0;
   				else return;
@@ -31574,7 +31601,7 @@
   						break
   					}
   				default:
-
+  					{}
   				}
   				if ((t | 0) == 9) {
   					b[Fa >> 1] = 5;
@@ -32032,7 +32059,7 @@
   								break b
   							}
   						default:
-
+  							{}
   						}
   						if (n) {
   							b[Va >> 1] = Oa(5, Ta) | 0;
@@ -35773,6 +35800,16 @@
   				return d | 0
   			}
 
+  			function Vb(a) {
+  				a = a | 0;
+  				return 0
+  			}
+
+  			function Wb(a) {
+  				a = a | 0;
+  				return
+  			}
+
   			function Xb() {
   				$(24600);
   				return 24608
@@ -35785,20 +35822,26 @@
 
   			function Zb(a) {
   				a = a | 0;
-  				var b = 0;
+  				var b = 0,
+  					d = 0;
   				do
   				if (a) {
   					if ((c[a + 76 >> 2] | 0) <= -1) {
   						b = _b(a) | 0;
   						break
   					}
+  					d = (Vb(a) | 0) == 0;
   					b = _b(a) | 0;
+  					if (!d) Wb(a);
   				} else {
   					if (!(c[59] | 0)) b = 0;
   					else b = Zb(c[59] | 0) | 0;
   					a = c[(Xb() | 0) >> 2] | 0;
   					if (a) do {
+  						if ((c[a + 76 >> 2] | 0) > -1) d = Vb(a) | 0;
+  						else d = 0;
   						if ((c[a + 20 >> 2] | 0) >>> 0 > (c[a + 28 >> 2] | 0) >>> 0) b = _b(a) | 0 | b;
+  						if (d | 0) Wb(a);
   						a = c[a + 56 >> 2] | 0;
   					} while ((a | 0) != 0);
   					Yb();
@@ -36500,7 +36543,6 @@
   		};
 
   		function run(args) {
-  			args = args || Module["arguments"];
   			if (runDependencies > 0) {
   				return
   			}
@@ -36628,6 +36670,106 @@
   };
   });
 
+  var silk = function() {
+      var silkModule = null;
+      var silkModuleUrl = '';
+
+      function isSilkHeader(u8Array) {
+          if (!u8Array || u8Array.length < 9) {
+              return false;
+          }
+          var header0 = bytesToAscii(u8Array, 0, 9);
+          if (header0 === '#!SILK_V3') {
+              return true;
+          }
+          return u8Array[0] === 0x02 && bytesToAscii(u8Array, 1, 9) === '#!SILK_V3';
+      }
+
+      function bytesToAscii(u8Array, start, len) {
+          var out = '';
+          var end = Math.min(u8Array.length, start + len);
+          for (var i = start; i < end; i++) {
+              out += String.fromCharCode(u8Array[i]);
+          }
+          return out;
+      }
+
+      function pcmS16leToFloat32(pcmBytes) {
+          var byteLength = pcmBytes.byteLength - (pcmBytes.byteLength % 2);
+          var sampleLength = Math.floor(byteLength / 2);
+          var view = new DataView(pcmBytes.buffer, pcmBytes.byteOffset, byteLength);
+          var out = new Float32Array(sampleLength);
+          for (var i = 0; i < sampleLength; i++) {
+              out[i] = view.getInt16(i * 2, true) / 32768;
+          }
+          return out;
+      }
+
+      function normalizeModule(mod) {
+          if (!mod) {
+              return null;
+          }
+          return mod.default || mod;
+      }
+
+      function getSilkModule(moduleUrl) {
+          if (silkModule && silkModuleUrl === moduleUrl) {
+              return Promise.resolve(silkModule);
+          }
+          if (!moduleUrl) {
+              return Promise.reject(new Error('silk module url is required.'));
+          }
+          silkModuleUrl = moduleUrl;
+          return import(moduleUrl).then(function(mod) {
+              silkModule = normalizeModule(mod);
+              if (!silkModule || typeof silkModule.decode !== 'function') {
+                  throw new Error('silk module decode() is not available.');
+              }
+              return silkModule;
+          });
+      }
+
+      function postDecodeResult(samples, sampleRate) {
+          self.postMessage({
+              samples: samples,
+              sampleRate: sampleRate
+          });
+      }
+
+      self.onmessage = function(e) {
+          var data = e.data || {};
+          switch (data.command) {
+              case 'decode': {
+                  var input = data.buffer instanceof Uint8Array ? data.buffer : new Uint8Array(data.buffer || 0);
+                  if (!input.length) {
+                      self.postMessage({error: 'Empty silk buffer.'});
+                      return;
+                  }
+                  if (!isSilkHeader(input)) {
+                      self.postMessage({error: 'Invalid silk-v3 header.'});
+                      return;
+                  }
+
+                  var targetSampleRate = data.sampleRate || 24000;
+                  getSilkModule(data.moduleUrl).then(function(moduleApi) {
+                      return moduleApi.decode(input, targetSampleRate);
+                  }).then(function(decoded) {
+                      if (!decoded || !decoded.data || !decoded.data.length) {
+                          throw new Error('silk decoder returned empty pcm.');
+                      }
+                      var samples = pcmS16leToFloat32(decoded.data);
+                      postDecodeResult(samples, targetSampleRate);
+                  }).catch(function(err) {
+                      self.postMessage({
+                          error: err && err.message ? err.message : 'Failed to decode silk audio.'
+                      });
+                  });
+                  break;
+              }
+          }
+      };
+  };
+
   var amrWorkerStr = amrnb.toString().replace(/^\s*function.*?\(\)\s*{/, '').replace(/}\s*$/, '');
   var amrWorkerURLObj = (window.URL || window.webkitURL).createObjectURL(new Blob([amrWorkerStr], {
     type: "text/javascript"
@@ -36636,15 +36778,14 @@
   var amrWbWorkerURLObj = (window.URL || window.webkitURL).createObjectURL(new Blob([amrWbWorkerStr], {
     type: "text/javascript"
   }));
-
-  var BenzAMRRecorder =
-  /*#__PURE__*/
-  function () {
+  var silkWorkerStr = silk.toString().replace(/^\s*function.*?\(\)\s*{/, '').replace(/}\s*$/, '');
+  var silkWorkerURLObj = (window.URL || window.webkitURL).createObjectURL(new Blob([silkWorkerStr], {
+    type: "text/javascript"
+  }));
+  var BenzAMRRecorder = /*#__PURE__*/function () {
     function BenzAMRRecorder() {
       var _this = this;
-
       _classCallCheck(this, BenzAMRRecorder);
-
       this._isInit = false;
       this._isInitRecorder = false;
       this._recorderControl = new RecorderControl();
@@ -36664,225 +36805,256 @@
       this._isPaused = false;
       this._startCtxTime = 0.0;
       this._pauseTime = 0.0;
-      this._wbAudioType = '';
-
+      this._audioType = '';
+      this._sampleRate = 8000;
+      /**
+       * init 之前先播放一个空音频。
+       * 因为有些环境（如iOS）播放首个音频时禁止自动、异步播放，
+       * 播放空音频防止加载后立即播放的功能失效。
+       * 但即使如此，init* 仍然须放入一个用户事件中
+       * @private
+       */
       this._playEmpty = function () {
         _this._recorderControl.playPcm(new Float32Array(10), 24000);
       };
-
       this._onEndCallback = function () {
         if (_this._isPlaying) {
           _this._isPlaying = false;
-
           if (_this._onStop) {
             _this._onStop();
           }
-
           if (_this._onAutoEnded) {
             _this._onAutoEnded();
           }
         }
-
         if (!_this._isPaused) {
           if (_this._onEnded) {
             _this._onEnded();
           }
         }
       };
-
+      /*
+      static encodeAMR(samples, sampleRate) {
+          sampleRate = sampleRate || 8000;
+          return AMR.encode(samples, sampleRate, 7);
+      }
+      */
       this._runAMRWorker = function (msg, resolve) {
         var amrWorker = new Worker(amrWorkerURLObj);
         amrWorker.postMessage(msg);
-
         amrWorker.onmessage = function (e) {
           resolve(e.data.amr);
           amrWorker.terminate();
         };
       };
-
+      // amr-wb
       this._runAMRWBWorker = function (msg, resolve) {
         var amrWbWorker = new Worker(amrWbWorkerURLObj);
         amrWbWorker.postMessage(msg);
-
         amrWbWorker.onmessage = function (e) {
           resolve(e.data.amr);
           amrWbWorker.terminate();
         };
       };
+      this._runSilkWorker = function (msg, resolve, reject) {
+        var silkWorkerObj = new Worker(silkWorkerURLObj);
+        silkWorkerObj.postMessage(msg);
+        silkWorkerObj.onmessage = function (e) {
+          if (e.data && e.data.error) {
+            reject(new Error(e.data.error));
+          } else {
+            resolve(e.data);
+          }
+          silkWorkerObj.terminate();
+        };
+        silkWorkerObj.onerror = function (e) {
+          reject(new Error(e.message || 'Failed to decode silk audio.'));
+          silkWorkerObj.terminate();
+        };
+      };
     }
-    /**
-     * 是否已经初始化
-     * @return {boolean}
-     */
+    return _createClass(BenzAMRRecorder, [{
+      key: "_getPlaybackSampleRate",
+      value: function _getPlaybackSampleRate() {
+        return this._isInitRecorder ? RecorderControl.getCtxSampleRate() : this._sampleRate;
+      }
+    }, {
+      key: "_getSilkModuleURL",
+      value: function _getSilkModuleURL() {
+        try {
+          return new URL(BenzAMRRecorder._silkModuleUrl, window.location.href).toString();
+        } catch (e) {
+          return BenzAMRRecorder._silkModuleUrl;
+        }
+      }
 
-
-    _createClass(BenzAMRRecorder, [{
+      /**
+       * 是否已经初始化
+       * @return {boolean}
+       */
+    }, {
       key: "isInit",
       value: function isInit() {
         return this._isInit;
       }
+
       /**
        * 使用浮点数据初始化
        * @param {Float32Array} array
        * @return {Promise}
        */
-
     }, {
       key: "initWithArrayBuffer",
       value: function initWithArrayBuffer(array, audioType) {
         var _this2 = this;
-
-        this._wbAudioType = audioType;
-
         if (this._isInit || this._isInitRecorder) {
           BenzAMRRecorder.throwAlreadyInitialized();
         }
-
         this._playEmpty();
-
+        var u8Array = new Uint8Array(array);
+        var detectedAudioType = BenzAMRRecorder._detectAudioType(u8Array, audioType);
+        var shouldFallbackToContextDecode = !detectedAudioType || detectedAudioType === 'audio/amr';
         return new Promise(function (resolve, reject) {
-          if (audioType && audioType === 'audio/amr-wb') {
-            var u8Array = new Uint8Array(array);
-
-            _this2.decodeAMRWBAsync(u8Array).then(function (samples) {
-              _this2._samples = samples;
-              _this2._isInit = true;
-
-              if (!_this2._samples) {
-                RecorderControl.decodeAudioArrayBufferByContext(array).then(function (data) {
-                  _this2._isInit = true;
-                  return _this2.encodeAMRAsync(data, RecorderControl.getCtxSampleRate());
-                }).then(function (rawData) {
-                  _this2._rawData = rawData;
-                  _this2._blob = BenzAMRRecorder.rawAMRWBData2Blob(rawData);
-                  return _this2.decodeAMRWBAsync(rawData);
-                }).then(function (sample) {
-                  _this2._samples = sample;
-                  resolve();
-                }).catch(function () {
-                  reject(new Error('Failed to decode.'));
-                });
-              } else {
-                _this2._rawData = u8Array;
-                resolve();
-              }
+          var decodePromise;
+          if (detectedAudioType === 'audio/amr-wb') {
+            decodePromise = _this2.decodeAMRWBAsync(u8Array).then(function (samples) {
+              return {
+                samples: samples,
+                audioType: 'audio/amr-wb',
+                sampleRate: 16000,
+                rawData: u8Array,
+                blob: BenzAMRRecorder.rawAMRWBData2Blob(u8Array)
+              };
+            });
+          } else if (detectedAudioType === 'audio/silk-v3') {
+            decodePromise = _this2.decodeSILKAsync(u8Array).then(function (silkResult) {
+              return {
+                samples: silkResult.samples,
+                audioType: 'audio/silk-v3',
+                sampleRate: silkResult.sampleRate,
+                rawData: u8Array,
+                blob: BenzAMRRecorder.rawSILKData2Blob(u8Array)
+              };
             });
           } else {
-            var _u8Array = new Uint8Array(array);
-
-            _this2.decodeAMRAsync(_u8Array).then(function (samples) {
-              _this2._samples = samples;
-              _this2._isInit = true;
-
-              if (!_this2._samples) {
-                RecorderControl.decodeAudioArrayBufferByContext(array).then(function (data) {
-                  _this2._isInit = true;
-                  return _this2.encodeAMRAsync(data, RecorderControl.getCtxSampleRate());
-                }).then(function (rawData) {
-                  _this2._rawData = rawData;
-                  _this2._blob = BenzAMRRecorder.rawAMRData2Blob(rawData);
-                  return _this2.decodeAMRAsync(rawData);
-                }).then(function (sample) {
-                  _this2._samples = sample;
-                  resolve();
-                }).catch(function () {
-                  reject(new Error('Failed to decode.'));
-                });
-              } else {
-                _this2._rawData = _u8Array;
-                resolve();
-              }
+            decodePromise = _this2.decodeAMRAsync(u8Array).then(function (samples) {
+              return {
+                samples: samples,
+                audioType: 'audio/amr',
+                sampleRate: 8000,
+                rawData: u8Array,
+                blob: BenzAMRRecorder.rawAMRData2Blob(u8Array)
+              };
             });
           }
+          decodePromise.then(function (result) {
+            if (result.samples && result.samples.length) {
+              _this2._samples = result.samples;
+              _this2._rawData = result.rawData;
+              _this2._audioType = result.audioType;
+              _this2._sampleRate = result.sampleRate;
+              _this2._isInit = true;
+              if (!_this2._blob) {
+                _this2._blob = result.blob;
+              }
+              resolve();
+              return;
+            }
+            if (!shouldFallbackToContextDecode) {
+              reject(new Error('Failed to decode.'));
+              return;
+            }
+            RecorderControl.decodeAudioArrayBufferByContext(array).then(function (data) {
+              return _this2.encodeAMRAsync(data, RecorderControl.getCtxSampleRate());
+            }).then(function (rawData) {
+              _this2._rawData = rawData;
+              _this2._audioType = 'audio/amr';
+              _this2._sampleRate = 8000;
+              _this2._blob = BenzAMRRecorder.rawAMRData2Blob(rawData);
+              return _this2.decodeAMRAsync(rawData);
+            }).then(function (sample) {
+              _this2._samples = sample;
+              _this2._isInit = true;
+              resolve();
+            }).catch(function () {
+              reject(new Error('Failed to decode.'));
+            });
+          }).catch(function () {
+            reject(new Error('Failed to decode.'));
+          });
         });
       }
+
       /**
        * 使用 Blob 对象初始化（ <input type="file">）
        * @param {Blob} blob
        * @return {Promise}
        */
-
     }, {
       key: "initWithBlob",
       value: function initWithBlob(blob, audioType) {
         var _this3 = this;
-
-        this._wbAudioType = audioType;
-
+        this._audioType = audioType || '';
         if (this._isInit || this._isInitRecorder) {
           BenzAMRRecorder.throwAlreadyInitialized();
         }
-
         this._playEmpty();
-
         this._blob = blob;
         var p = new Promise(function (resolve) {
           var reader = new FileReader();
-
           reader.onload = function (e) {
             resolve(e.target.result);
           };
-
           reader.readAsArrayBuffer(blob);
         });
         return p.then(function (data) {
           return _this3.initWithArrayBuffer(data, audioType);
         });
       }
+
       /**
        * 使用 url 初始化
        * @param {string} url
        * @return {Promise}
        */
-
     }, {
       key: "initWithUrl",
       value: function initWithUrl(url, audioType) {
         var _this4 = this;
-
-        this._wbAudioType = audioType;
-
+        this._audioType = audioType || '';
         if (this._isInit || this._isInitRecorder) {
           BenzAMRRecorder.throwAlreadyInitialized();
         }
-
         this._playEmpty();
-
         var p = new Promise(function (resolve, reject) {
           var xhr = new XMLHttpRequest();
           xhr.open('GET', url, true);
           xhr.responseType = 'arraybuffer';
-
           xhr.onload = function () {
             resolve(this.response);
           };
-
           xhr.onerror = function () {
             reject(new Error('Failed to fetch ' + url));
           };
-
           xhr.send();
         });
         return p.then(function (array) {
           return _this4.initWithArrayBuffer(array, audioType);
         });
       }
+
       /**
        * 初始化录音
        * @return {Promise}
        */
-
     }, {
       key: "initWithRecord",
       value: function initWithRecord() {
         var _this5 = this;
-
         if (this._isInit || this._isInitRecorder) {
           BenzAMRRecorder.throwAlreadyInitialized();
         }
-
         this._playEmpty();
-
         return new Promise(function (resolve, reject) {
           _this5._recorderControl.initRecorder().then(function () {
             _this5._isInitRecorder = true;
@@ -36892,14 +37064,6 @@
           });
         });
       }
-      /**
-       * init 之前先播放一个空音频。
-       * 因为有些环境（如iOS）播放首个音频时禁止自动、异步播放，
-       * 播放空音频防止加载后立即播放的功能失效。
-       * 但即使如此，init* 仍然须放入一个用户事件中
-       * @private
-       */
-
     }, {
       key: "on",
       value: function on(action, fn) {
@@ -36908,128 +37072,118 @@
             case 'play':
               this._onPlay = fn;
               break;
-
             case 'stop':
               this._onStop = fn;
               break;
-
             case 'pause':
               this._onPause = fn;
               break;
-
             case 'resume':
               this._onResume = fn;
               break;
-
             case 'ended':
               this._onEnded = fn;
               break;
-
             case 'autoEnded':
               this._onAutoEnded = fn;
               break;
-
             case 'startRecord':
               this._onStartRecord = fn;
               break;
-
             case 'cancelRecord':
               this._onCancelRecord = fn;
               break;
-
             case 'finishRecord':
               this._onFinishRecord = fn;
               break;
-
-            default:
           }
         }
       }
+
       /**
        * 播放事件
        * @param {Function} fn
        */
-
     }, {
       key: "onPlay",
       value: function onPlay(fn) {
         this.on('play', fn);
       }
+
       /**
        * 停止事件（包括播放结束）
        * @param {Function} fn
        */
-
     }, {
       key: "onStop",
       value: function onStop(fn) {
         this.on('stop', fn);
       }
+
       /**
        * 暂停事件
        * @param {Function} fn
        */
-
     }, {
       key: "onPause",
       value: function onPause(fn) {
         this.on('pause', fn);
       }
+
       /**
        * 继续播放事件
        * @param {Function} fn
        */
-
     }, {
       key: "onResume",
       value: function onResume(fn) {
         this.on('resume', fn);
       }
+
       /**
        * 播放结束事件
        * @param {Function} fn
        */
-
     }, {
       key: "onEnded",
       value: function onEnded(fn) {
         this.on('ended', fn);
       }
+
       /**
        * 播放完毕自动结束事件
        * @param {Function} fn
        */
-
     }, {
       key: "onAutoEnded",
       value: function onAutoEnded(fn) {
         this.on('autoEnded', fn);
       }
+
       /**
        * 开始录音事件
        * @param {Function} fn
        */
-
     }, {
       key: "onStartRecord",
       value: function onStartRecord(fn) {
         this.on('startRecord', fn);
       }
+
       /**
        * 结束录音事件
        * @param {Function} fn
        */
-
     }, {
       key: "onFinishRecord",
       value: function onFinishRecord(fn) {
         this.on('finishRecord', fn);
       }
+
       /**
        * 放弃录音事件
        * @param {Function} fn
        */
-
     }, {
       key: "onCancelRecord",
       value: function onCancelRecord(fn) {
@@ -37037,90 +37191,78 @@
       }
     }, {
       key: "play",
-
+      value:
       /**
        * 播放（重新开始，无视暂停状态）
        * @param {number|string?} startTime 可指定开始位置
        */
-      value: function play(startTime) {
+      function play(startTime) {
         var _startTime = startTime && startTime < this.getDuration() ? parseFloat(startTime) : 0;
-
         if (!this._isInit) {
           throw new Error('Please init AMR first.');
         }
-
         if (this._onPlay) {
           this._onPlay();
         }
-
         this._isPlaying = true;
         this._isPaused = false;
         this._startCtxTime = RecorderControl.getCtxTime() - _startTime;
-
-        this._recorderControl.playPcm(this._samples, this._isInitRecorder ? RecorderControl.getCtxSampleRate() : 8000, this._onEndCallback.bind(this), _startTime, this._wbAudioType);
+        this._recorderControl.playPcm(this._samples, this._getPlaybackSampleRate(), this._onEndCallback.bind(this), _startTime);
       }
+
       /**
        * 停止
        */
-
     }, {
       key: "stop",
       value: function stop() {
         this._recorderControl.stopPcm();
-
         this._isPlaying = false;
         this._isPaused = false;
-
         if (this._onStop) {
           this._onStop();
         }
       }
+
       /**
        * 暂停
        */
-
     }, {
       key: "pause",
       value: function pause() {
         if (!this._isPlaying) {
           return;
         }
-
         this._isPlaying = false;
         this._isPaused = true;
         this._pauseTime = RecorderControl.getCtxTime() - this._startCtxTime;
-
         this._recorderControl.stopPcm();
-
         if (this._onPause) {
           this._onPause();
         }
       }
+
       /**
        * 从暂停处继续
        */
-
     }, {
       key: "resume",
       value: function resume() {
         if (!this._isPaused) {
           return;
         }
-
         this._isPlaying = true;
         this._isPaused = false;
         this._startCtxTime = RecorderControl.getCtxTime() - this._pauseTime;
-
-        this._recorderControl.playPcm(this._samples, this._isInitRecorder ? RecorderControl.getCtxSampleRate() : 8000, this._onEndCallback.bind(this), this._pauseTime, this._wbAudioType);
-
+        this._recorderControl.playPcm(this._samples, this._getPlaybackSampleRate(), this._onEndCallback.bind(this), this._pauseTime);
         if (this._onResume) {
           this._onResume();
         }
       }
+
       /**
        * 整合 play() 和 resume()，若在暂停状态则继续，否则从头播放
        */
-
     }, {
       key: "playOrResume",
       value: function playOrResume() {
@@ -37130,10 +37272,10 @@
           this.play();
         }
       }
+
       /**
        * 整合 resume() 和 pause()
        */
-
     }, {
       key: "pauseOrResume",
       value: function pauseOrResume() {
@@ -37143,10 +37285,10 @@
           this.pause();
         }
       }
+
       /**
        * 整合 play() 和 resume() 和 pause()
        */
-
     }, {
       key: "playOrPauseOrResume",
       value: function playOrPauseOrResume() {
@@ -37158,35 +37300,32 @@
           this.play();
         }
       }
+
       /**
        * 跳转到音频指定位置，不改变播放状态
        * @param {number|string} time 指定位置（秒，浮点数）
        */
-
     }, {
       key: "setPosition",
       value: function setPosition(time) {
         var _time = parseFloat(time);
-
         if (_time > this.getDuration()) {
           this.stop();
         } else if (this._isPaused) {
           this._pauseTime = _time;
         } else if (this._isPlaying) {
           this._recorderControl.stopPcmSilently();
-
           this._startCtxTime = RecorderControl.getCtxTime() - _time;
-
-          this._recorderControl.playPcm(this._samples, this._isInitRecorder ? RecorderControl.getCtxSampleRate() : 8000, this._onEndCallback.bind(this), _time, this._wbAudioType);
+          this._recorderControl.playPcm(this._samples, this._getPlaybackSampleRate(), this._onEndCallback.bind(this), _time);
         } else {
           this.play(_time);
         }
       }
+
       /**
        * 获取当前播放位置（秒）
        * @return {Number} 位置，秒，浮点数
        */
-
     }, {
       key: "getCurrentPosition",
       value: function getCurrentPosition() {
@@ -37195,55 +37334,51 @@
         } else if (this._isPlaying) {
           return RecorderControl.getCtxTime() - this._startCtxTime;
         }
-
         return 0;
       }
+
       /**
        * 是否正在播放
        * @return {boolean}
        */
-
     }, {
       key: "isPlaying",
       value: function isPlaying() {
         return this._isPlaying;
       }
+
       /**
        * 是否暂停中
        * @return {boolean}
        */
-
     }, {
       key: "isPaused",
       value: function isPaused() {
         return this._isPaused;
       }
+
       /**
        * 开始录音
        */
-
     }, {
       key: "startRecord",
       value: function startRecord() {
         this._recorderControl.startRecord();
-
         if (this._onStartRecord) {
           this._onStartRecord();
         }
       }
+
       /**
        * 结束录音，并把录制的音频转换成 AMR
        * @return {Promise}
        */
-
     }, {
       key: "finishRecord",
       value: function finishRecord() {
         var _this6 = this;
-
         return new Promise(function (resolve) {
           _this6._recorderControl.stopRecord();
-
           _this6._recorderControl.generateRecordSamples().then(function (samples) {
             _this6._samples = samples;
             return _this6.encodeAMRAsync(samples, RecorderControl.getCtxSampleRate());
@@ -37251,51 +37386,46 @@
             _this6._rawData = rawData;
             _this6._blob = BenzAMRRecorder.rawAMRData2Blob(_this6._rawData);
             _this6._isInit = true;
-
             if (_this6._onFinishRecord) {
               _this6._onFinishRecord();
             }
-
             _this6._recorderControl.releaseRecord();
-
             resolve();
           });
         });
       }
+
       /**
        * 放弃录音
        */
-
     }, {
       key: "cancelRecord",
       value: function cancelRecord() {
         this._recorderControl.stopRecord();
-
         this._recorderControl.releaseRecord();
-
         if (this._onCancelRecord) {
           this._onCancelRecord();
         }
       }
+
       /**
        * 是否正在录音
        * @return {boolean}
        */
-
     }, {
       key: "isRecording",
       value: function isRecording() {
         return this._recorderControl.isRecording();
       }
+
       /**
        * 获取音频的时间长度（单位：秒）
        * @return {number}
        */
-
     }, {
       key: "getDuration",
       value: function getDuration() {
-        var rate = this._isInitRecorder ? RecorderControl.getCtxSampleRate() : this._wbAudioType === 'audio/amr-wb' ? 16000 : 8000;
+        var rate = this._isInitRecorder ? RecorderControl.getCtxSampleRate() : this._sampleRate;
         return this._samples.length / rate;
       }
     }, {
@@ -37303,18 +37433,10 @@
       value: function getBlob() {
         return this._blob;
       }
-      /*
-      static encodeAMR(samples, sampleRate) {
-          sampleRate = sampleRate || 8000;
-          return AMR.encode(samples, sampleRate, 7);
-      }
-      */
-
     }, {
       key: "encodeAMRAsync",
       value: function encodeAMRAsync(samples, sampleRate) {
         var _this7 = this;
-
         return new Promise(function (resolve) {
           _this7._runAMRWorker({
             command: 'encode',
@@ -37327,21 +37449,19 @@
       key: "decodeAMRAsync",
       value: function decodeAMRAsync(u8Array) {
         var _this8 = this;
-
         return new Promise(function (resolve) {
           _this8._runAMRWorker({
             command: 'decode',
             buffer: u8Array
           }, resolve);
         });
-      } // amr-wb
-
+      }
     }, {
       key: "encodeAMRWBAsync",
+      value:
       // amr-wb 编码
-      value: function encodeAMRWBAsync(samples, sampleRate) {
+      function encodeAMRWBAsync(samples, sampleRate) {
         var _this9 = this;
-
         return new Promise(function (resolve) {
           _this9._runAMRWBWorker({
             command: 'encode',
@@ -37353,20 +37473,77 @@
     }, {
       key: "decodeAMRWBAsync",
       value: function decodeAMRWBAsync(u8Array) {
-        var _this10 = this;
-
+        var _this0 = this;
         return new Promise(function (resolve) {
-          _this10._runAMRWBWorker({
+          _this0._runAMRWBWorker({
             command: 'decode',
             buffer: u8Array
           }, resolve);
         });
       }
+    }, {
+      key: "decodeSILKAsync",
+      value: function decodeSILKAsync(u8Array, sampleRate) {
+        var _this1 = this;
+        return new Promise(function (resolve, reject) {
+          _this1._runSilkWorker({
+            command: 'decode',
+            buffer: u8Array,
+            sampleRate: sampleRate || BenzAMRRecorder.DEFAULT_SILK_SAMPLE_RATE,
+            moduleUrl: _this1._getSilkModuleURL()
+          }, resolve, reject);
+        }).then(function (result) {
+          return {
+            samples: result.samples,
+            sampleRate: result.sampleRate || sampleRate || BenzAMRRecorder.DEFAULT_SILK_SAMPLE_RATE
+          };
+        });
+      }
     }], [{
+      key: "_bytesToAscii",
+      value: function _bytesToAscii(u8Array, start, len) {
+        var str = '';
+        var max = Math.min(u8Array.length, start + len);
+        for (var i = start; i < max; i++) {
+          str += String.fromCharCode(u8Array[i]);
+        }
+        return str;
+      }
+    }, {
+      key: "_detectAudioType",
+      value: function _detectAudioType(u8Array, hintedType) {
+        if (hintedType === 'audio/amr' || hintedType === 'audio/amr-wb') {
+          return hintedType;
+        }
+        if (hintedType === 'audio/silk' || hintedType === 'audio/silk-v3') {
+          return 'audio/silk-v3';
+        }
+        if (!u8Array || !u8Array.length) {
+          return hintedType || '';
+        }
+        if (BenzAMRRecorder._bytesToAscii(u8Array, 0, 9) === '#!AMR-WB\n') {
+          return 'audio/amr-wb';
+        }
+        if (BenzAMRRecorder._bytesToAscii(u8Array, 0, 6) === '#!AMR\n') {
+          return 'audio/amr';
+        }
+        if (BenzAMRRecorder._bytesToAscii(u8Array, 0, 9) === '#!SILK_V3' || u8Array[0] === 0x02 && BenzAMRRecorder._bytesToAscii(u8Array, 1, 9) === '#!SILK_V3') {
+          return 'audio/silk-v3';
+        }
+        return hintedType || '';
+      }
+    }, {
       key: "rawAMRWBData2Blob",
       value: function rawAMRWBData2Blob(data) {
         return new Blob([data.buffer], {
           type: 'audio/amr-wb'
+        });
+      }
+    }, {
+      key: "rawSILKData2Blob",
+      value: function rawSILKData2Blob(data) {
+        return new Blob([data.buffer], {
+          type: 'audio/silk'
         });
       }
     }, {
@@ -37377,36 +37554,46 @@
         });
       }
     }, {
+      key: "setSilkModuleUrl",
+      value: function setSilkModuleUrl(url) {
+        BenzAMRRecorder._silkModuleUrl = url;
+      }
+    }, {
+      key: "getSilkModuleUrl",
+      value: function getSilkModuleUrl() {
+        return BenzAMRRecorder._silkModuleUrl;
+      }
+    }, {
       key: "throwAlreadyInitialized",
       value: function throwAlreadyInitialized() {
         throw new Error('AMR has been initialized. For a new AMR, please generate a new BenzAMRRecorder().');
       }
+
       /**
        * 判断浏览器是否支持播放
        * @return {boolean}
        */
-
     }, {
       key: "isPlaySupported",
       value: function isPlaySupported() {
         return RecorderControl.isPlaySupported();
       }
+
       /**
        * 判断浏览器是否支持录音
        * @return {boolean}
        */
-
     }, {
       key: "isRecordSupported",
       value: function isRecordSupported() {
         return RecorderControl.isRecordSupported();
       }
     }]);
-
-    return BenzAMRRecorder;
   }();
+  BenzAMRRecorder.DEFAULT_SILK_SAMPLE_RATE = 24000;
+  BenzAMRRecorder._silkModuleUrl = './res/silk-wasm/index.mjs';
 
   return BenzAMRRecorder;
 
-}));
+})));
 //# sourceMappingURL=BenzAMRRecorder.js.map
