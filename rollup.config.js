@@ -42,12 +42,12 @@ export default [
                 sourcemap: true
             },
             {
-                file: './BenzAMRRecorder.esm.js',
+                file: './BenzAMRRecorder.mjs',
                 format: 'esm',
                 sourcemap: false
             },
             {
-                file: './BenzAMRRecorder.cjs.js',
+                file: './BenzAMRRecorder.cjs',
                 format: 'cjs',
                 strict: false,
                 sourcemap: false

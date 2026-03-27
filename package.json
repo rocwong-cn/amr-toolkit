@@ -1,16 +1,42 @@
 {
   "name": "amr-toolkit",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "amr 音频录制与播放（微信语音所用的格式）",
-  "main": "BenzAMRRecorder.cjs.js",
-  "module": "BenzAMRRecorder.esm.js",
+  "main": "BenzAMRRecorder.cjs",
+  "module": "BenzAMRRecorder.mjs",
   "exports": {
     ".": {
-      "import": "./BenzAMRRecorder.esm.js",
-      "require": "./BenzAMRRecorder.cjs.js",
-      "default": "./BenzAMRRecorder.esm.js"
-    }
+      "import": "./BenzAMRRecorder.mjs",
+      "require": "./BenzAMRRecorder.cjs",
+      "default": "./BenzAMRRecorder.mjs"
+    },
+    "./src/BenzAMRRecorder.js": {
+      "import": "./BenzAMRRecorder.mjs",
+      "require": "./BenzAMRRecorder.cjs",
+      "default": "./BenzAMRRecorder.mjs"
+    },
+    "./BenzAMRRecorder.js": {
+      "import": "./BenzAMRRecorder.mjs",
+      "require": "./BenzAMRRecorder.cjs",
+      "default": "./BenzAMRRecorder.mjs"
+    },
+    "./package.json": "./package.json"
   },
+  "files": [
+    "BenzAMRRecorder.cjs",
+    "BenzAMRRecorder.js",
+    "BenzAMRRecorder.min.js",
+    "BenzAMRRecorder.js.map",
+    "BenzAMRRecorder.mjs",
+    "BenzAMRRecorder.d.ts",
+    "res",
+    "LICENSE",
+    "README.md",
+    "README-EN.md"
+  ],
+  "unpkg": "BenzAMRRecorder.min.js",
+  "jsdelivr": "BenzAMRRecorder.min.js",
+  "sideEffects": false,
   "types": "BenzAMRRecorder.d.ts",
   "directories": {
     "lib": "lib"
