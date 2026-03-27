@@ -1,11 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('fs'), require('path')) :
-  typeof define === 'function' && define.amd ? define(['fs', 'path'], factory) :
-  (global = global || self, global.BenzAMRRecorder = factory(global.fs, global.path$1));
-}(this, (function (fs, path$1) {
-  fs = fs && Object.prototype.hasOwnProperty.call(fs, 'default') ? fs['default'] : fs;
-  path$1 = path$1 && Object.prototype.hasOwnProperty.call(path$1, 'default') ? path$1['default'] : path$1;
-
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+  typeof define === 'function' && define.amd ? define(factory) :
+  (global = global || self, global.BenzAMRRecorder = factory());
+}(this, (function () {
   function _classCallCheck(a, n) {
     if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
   }
@@ -25233,8 +25230,8 @@
   				var ret;
   				ret = tryParseAsDataURI(filename);
   				if (!ret) {
-  					if (!nodeFS) nodeFS = fs;
-  					if (!nodePath) nodePath = path$1;
+  					if (!nodeFS) nodeFS = undefined;
+  					if (!nodePath) nodePath = undefined;
   					filename = nodePath["normalize"](filename);
   					ret = nodeFS["readFileSync"](filename);
   				}
@@ -36720,7 +36717,7 @@
               return Promise.reject(new Error('silk module url is required.'));
           }
           silkModuleUrl = moduleUrl;
-          return import(moduleUrl).then(function(mod) {
+          return import(/* @vite-ignore */ moduleUrl).then(function(mod) {
               silkModule = normalizeModule(mod);
               if (!silkModule || typeof silkModule.decode !== 'function') {
                   throw new Error('silk module decode() is not available.');

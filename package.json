@@ -1,8 +1,16 @@
 {
   "name": "amr-toolkit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "amr 音频录制与播放（微信语音所用的格式）",
-  "main": "BenzAMRRecorder.js",
+  "main": "BenzAMRRecorder.cjs.js",
+  "module": "BenzAMRRecorder.esm.js",
+  "exports": {
+    ".": {
+      "import": "./BenzAMRRecorder.esm.js",
+      "require": "./BenzAMRRecorder.cjs.js",
+      "default": "./BenzAMRRecorder.esm.js"
+    }
+  },
   "types": "BenzAMRRecorder.d.ts",
   "directories": {
     "lib": "lib"

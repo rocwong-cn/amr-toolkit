@@ -5,6 +5,19 @@ import cjs from "rollup-plugin-commonjs";
 import replace from 'rollup-plugin-re';
 import { terser } from "rollup-plugin-terser";
 
+const workerReplaceRules = {
+    'eval(': '[eval][0](',
+    'require("fs")': 'undefined',
+    "require('fs')": 'undefined',
+    'require("path")': 'undefined',
+    "require('path')": 'undefined'
+};
+
+const createWorkerReplacePlugin = () => replace({
+    include: ['./src/amrnb.js', './src/amrwb.js'],
+    replaces: workerReplaceRules
+});
+
 export default [
     {
         input: './src/BenzAMRRecorder.js',
@@ -14,17 +27,11 @@ export default [
                 jsnext: true,
                 browser: true
             }),
+            createWorkerReplacePlugin(),
             babel({
                 exclude: ['./node_modules/**', './src/amrnb.js', './src/amrwb.js', './src/silk.js']
             }),
-            cjs(),
-            // https://github.com/rollup/rollup/wiki/Troubleshooting#avoiding-eval
-            replace({
-                include: ['./src/amrnb.js', './src/amrwb.js'],
-                replaces: {
-                    'eval(': '[eval][0]('
-                }
-            })
+            cjs()
         ],
         output: [
             {
@@ -33,6 +40,17 @@ export default [
                 format: 'umd',
                 strict: false,
                 sourcemap: true
+            },
+            {
+                file: './BenzAMRRecorder.esm.js',
+                format: 'esm',
+                sourcemap: false
+            },
+            {
+                file: './BenzAMRRecorder.cjs.js',
+                format: 'cjs',
+                strict: false,
+                sourcemap: false
             }
         ]
     },
@@ -43,17 +61,11 @@ export default [
                 jsnext: true,
                 browser: true
             }),
+            createWorkerReplacePlugin(),
             babel({
                 exclude: ['./node_modules/benz-recorderjs/**', './src/amrnb.js', './src/amrwb.js', './src/silk.js']
             }),
             cjs(),
-            // https://github.com/rollup/rollup/wiki/Troubleshooting#avoiding-eval
-            replace({
-                include: ['./src/amrnb.js', './src/amrwb.js'],
-                replaces: {
-                    'eval(': '[eval][0]('
-                }
-            }),
             terser({
                 compress: {},
                 mangle: {

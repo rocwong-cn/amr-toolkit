@@ -48,7 +48,7 @@ module.exports = function() {
             return Promise.reject(new Error('silk module url is required.'));
         }
         silkModuleUrl = moduleUrl;
-        return import(moduleUrl).then(function(mod) {
+        return import(/* @vite-ignore */ moduleUrl).then(function(mod) {
             silkModule = normalizeModule(mod);
             if (!silkModule || typeof silkModule.decode !== 'function') {
                 throw new Error('silk module decode() is not available.');
