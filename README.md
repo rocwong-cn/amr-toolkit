@@ -3,6 +3,23 @@
 ![AcoWaves](https://img.shields.io/badge/AcoWaves-AudioPlayer-red) 
 [![size](https://img.shields.io/github/size/AcoWaves/benz-amr-recorder/BenzAMRRecorder.min.js)](https://gitHub.com/AcoWaves/benz-amr-recorder/blob/master/BenzAMRRecorder.min.js)
 
+## Release Notes
+
+### 2026-03-27
+
+#### Added
+- 新增 `silk-v3` 纯前端解码与播放能力（`WebWorker + wasm`），无需后端转码。
+- 新增自动格式识别：`amr-nb`、`amr-wb`、`silk-v3`（含前导 `0x02` 的 SILK 头）。
+- 新增 SILK 相关 API：`BenzAMRRecorder.setSilkModuleUrl()`、`BenzAMRRecorder.getSilkModuleUrl()`、`decodeSILKAsync()`。
+- 新增运行时资源目录：`res/silk-wasm/index.mjs`、`res/silk-wasm/silk.wasm`。
+
+#### Changed
+- 播放链路改为动态采样率，不再只按 `8000/16000` 写死，修复了不同编码下时长与进度计算一致性问题。
+
+#### Docs
+- Demo 与文档已同步支持本地选择 `amr/silk/aac/mp3`。
+
+----
 fork 自[BenzLeung的 benz-amr-recorder 项目](https://github.com/BenzLeung/benz-amr-recorder) ;这个库非常好用，但是由于不支持 amr-wb 音频格式的解析，而恰巧工作中有需要解析 amr-wb 的场景，因此，我fork 了一份，自己添加了一些功能
 
 目前已支持

@@ -1,6 +1,6 @@
 {
-  "name": "amr-recorder",
-  "version": "1.1.2",
+  "name": "amr-toolkit",
+  "version": "1.0.0",
   "description": "amr 音频录制与播放（微信语音所用的格式）",
   "main": "BenzAMRRecorder.js",
   "types": "BenzAMRRecorder.d.ts",
@@ -12,20 +12,21 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BenzLeung/benz-amr-recorder.git"
+    "url": "git+https://github.com/rocwong-cn/amr-toolkit.git"
   },
   "keywords": [
     "amr",
     "Web Audio API",
     "record",
-    "userMedia"
+    "userMedia",
+    "silk-v3"
   ],
-  "author": "Benz Leung",
+  "author": "rocwong-cn",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/BenzLeung/benz-amr-recorder/issues"
+      "bugs": {
+        "url": "https://github.com/rocwong-cn/amr-toolkit/issues"
   },
-  "homepage": "https://github.com/BenzLeung/benz-amr-recorder#readme",
+  "homepage": "https://github.com/rocwong-cn/amr-toolkit#readme",
   "devDependencies": {
     "@babel/core": "^7.2.2",
     "@babel/plugin-external-helpers": "^7.2.0",
